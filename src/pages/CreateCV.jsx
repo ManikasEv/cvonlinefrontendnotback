@@ -14,10 +14,27 @@ export default function CreateCV() {
   const [form, setForm] = useState({
     title: '',
     templateType: 'basic',
-    personalInfo: { fullName: '', email: '', phone: '', address: '', summary: '' },
+    personalInfo: { 
+      fullName: '', 
+      email: '', 
+      phone: '', 
+      address: '', 
+      summary: '',
+      dateOfBirth: '',
+      nationality: '',
+      profilePictureUrl: ''
+    },
     experience: [],
     education: [],
-    skills: []
+    skills: [],
+    languages: [],
+    drivingLicense: {
+      has_license: false,
+      categories: []
+    },
+    attachments: [],
+    certifications: [],
+    projects: []
   })
 
   useEffect(() => {
@@ -95,14 +112,104 @@ export default function CreateCV() {
   }
 
   const addSkill = () => {
-    const skill = prompt('Enter a skill:')
+    const skill = prompt('Enter skill name:')
     if (skill) {
-      setForm({ ...form, skills: [...form.skills, skill] })
+      const level = prompt('Enter proficiency level (1-5):', '3')
+      const proficiency = Math.min(5, Math.max(1, parseInt(level) || 3))
+      setForm({ 
+        ...form, 
+        skills: [...form.skills, { name: skill, level: proficiency }] 
+      })
     }
   }
 
   const removeSkill = (index) => {
     setForm({ ...form, skills: form.skills.filter((_, i) => i !== index) })
+  }
+
+  const addLanguage = () => {
+    const language = prompt('Enter language:')
+    if (language) {
+      const level = prompt('Enter proficiency (A1, A2, B1, B2, C1, C2):', 'B2')
+      setForm({ 
+        ...form, 
+        languages: [...form.languages, { name: language, level: level.toUpperCase() }] 
+      })
+    }
+  }
+
+  const removeLanguage = (index) => {
+    setForm({ ...form, languages: form.languages.filter((_, i) => i !== index) })
+  }
+
+  const addExperience = () => {
+    setForm({
+      ...form,
+      experience: [...form.experience, {
+        company: '',
+        position: '',
+        startDate: '',
+        endDate: '',
+        current: false,
+        responsibilities: []
+      }]
+    })
+  }
+
+  const updateExperience = (index, field, value) => {
+    const newExperience = [...form.experience]
+    newExperience[index][field] = value
+    setForm({ ...form, experience: newExperience })
+  }
+
+  const addResponsibility = (expIndex) => {
+    const responsibility = prompt('Enter responsibility/achievement:')
+    if (responsibility) {
+      const newExperience = [...form.experience]
+      newExperience[expIndex].responsibilities.push(responsibility)
+      setForm({ ...form, experience: newExperience })
+    }
+  }
+
+  const removeResponsibility = (expIndex, respIndex) => {
+    const newExperience = [...form.experience]
+    newExperience[expIndex].responsibilities = newExperience[expIndex].responsibilities.filter((_, i) => i !== respIndex)
+    setForm({ ...form, experience: newExperience })
+  }
+
+  const removeExperience = (index) => {
+    setForm({ ...form, experience: form.experience.filter((_, i) => i !== index) })
+  }
+
+  const toggleDrivingLicenseCategory = (category) => {
+    const categories = form.drivingLicense.categories || []
+    const hasCategory = categories.includes(category)
+    setForm({
+      ...form,
+      drivingLicense: {
+        has_license: true,
+        categories: hasCategory 
+          ? categories.filter(c => c !== category)
+          : [...categories, category]
+      }
+    })
+  }
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setForm({
+          ...form,
+          personalInfo: {
+            ...form.personalInfo,
+            profilePictureUrl: reader.result
+          }
+        })
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   return (
@@ -146,6 +253,26 @@ export default function CreateCV() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-3">Personal Information</h2>
                 
                 <div className="space-y-4">
+                  {/* Profile Picture */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
+                    <div className="flex items-center gap-4">
+                      {form.personalInfo.profilePictureUrl && (
+                        <img 
+                          src={form.personalInfo.profilePictureUrl} 
+                          alt="Profile" 
+                          className="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
+                        />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                     <input
@@ -189,6 +316,27 @@ export default function CreateCV() {
                   </div>
 
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                    <input
+                      type="date"
+                      value={form.personalInfo.dateOfBirth}
+                      onChange={e => setForm({...form, personalInfo: {...form.personalInfo, dateOfBirth: e.target.value}})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-600 focus:border-transparent text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
+                    <input
+                      type="text"
+                      value={form.personalInfo.nationality}
+                      onChange={e => setForm({...form, personalInfo: {...form.personalInfo, nationality: e.target.value}})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-600 focus:border-transparent text-sm"
+                      placeholder="e.g., American, British"
+                    />
+                  </div>
+
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Professional Summary</label>
                     <textarea
                       rows="4"
@@ -201,7 +349,109 @@ export default function CreateCV() {
                 </div>
               </div>
 
-              {/* Skills */}
+              {/* Work Experience */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h2 className="text-lg font-semibold text-gray-900">Work Experience</h2>
+                  <button
+                    type="button"
+                    onClick={addExperience}
+                    className="text-violet-600 text-sm font-medium hover:text-violet-700"
+                  >
+                    + Add Experience
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {form.experience.map((exp, i) => (
+                    <div key={i} className="p-4 border border-gray-200 rounded-lg space-y-3">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-medium text-gray-900">Experience {i + 1}</h3>
+                        <button
+                          type="button"
+                          onClick={() => removeExperience(i)}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      
+                      <input
+                        type="text"
+                        placeholder="Company Name *"
+                        value={exp.company}
+                        onChange={e => updateExperience(i, 'company', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                      
+                      <input
+                        type="text"
+                        placeholder="Position/Title *"
+                        value={exp.position}
+                        onChange={e => updateExperience(i, 'position', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="month"
+                          placeholder="Start Date"
+                          value={exp.startDate}
+                          onChange={e => updateExperience(i, 'startDate', e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        />
+                        <input
+                          type="month"
+                          placeholder="End Date"
+                          value={exp.endDate}
+                          disabled={exp.current}
+                          onChange={e => updateExperience(i, 'endDate', e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100"
+                        />
+                      </div>
+                      
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={exp.current}
+                          onChange={e => updateExperience(i, 'current', e.target.checked)}
+                          className="rounded border-gray-300 text-violet-600 focus:ring-violet-600"
+                        />
+                        <span className="text-gray-700">I currently work here</span>
+                      </label>
+                      
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-sm font-medium text-gray-700">Responsibilities</label>
+                          <button
+                            type="button"
+                            onClick={() => addResponsibility(i)}
+                            className="text-violet-600 text-xs hover:text-violet-700"
+                          >
+                            + Add
+                          </button>
+                        </div>
+                        <ul className="space-y-1">
+                          {exp.responsibilities.map((resp, ri) => (
+                            <li key={ri} className="flex items-start gap-2 text-sm">
+                              <span className="text-gray-600 mt-1">•</span>
+                              <span className="flex-1 text-gray-700">{resp}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeResponsibility(i, ri)}
+                                className="text-red-500 hover:text-red-700 text-xs"
+                              >
+                                ×
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Skills with Proficiency */}
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h2 className="text-lg font-semibold text-gray-900">Skills</h2>
@@ -213,14 +463,164 @@ export default function CreateCV() {
                     + Add Skill
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-2">
                   {form.skills.map((skill, i) => (
-                    <span key={i} className="px-3 py-1 bg-violet-100 text-violet-700 rounded-full text-sm flex items-center gap-2">
-                      {skill}
-                      <button type="button" onClick={() => removeSkill(i)} className="hover:text-violet-900">×</button>
-                    </span>
+                    <div key={i} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                      <span className="flex-1 text-sm font-medium text-gray-700">{skill.name}</span>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map(level => (
+                          <div
+                            key={level}
+                            className={`w-6 h-6 rounded ${
+                              level <= skill.level 
+                                ? 'bg-violet-600' 
+                                : 'bg-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => removeSkill(i)} 
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Languages */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h2 className="text-lg font-semibold text-gray-900">Languages</h2>
+                  <button
+                    type="button"
+                    onClick={addLanguage}
+                    className="text-violet-600 text-sm font-medium hover:text-violet-700"
+                  >
+                    + Add Language
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {form.languages.map((lang, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <span className="font-medium text-gray-700">{lang.name}</span>
+                        <span className="ml-3 px-2 py-1 bg-violet-100 text-violet-700 rounded text-xs font-medium">
+                          {lang.level}
+                        </span>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => removeLanguage(i)} 
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Driving License */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">Driving License</h2>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={form.drivingLicense.has_license}
+                      onChange={e => setForm({
+                        ...form, 
+                        drivingLicense: {
+                          ...form.drivingLicense,
+                          has_license: e.target.checked,
+                          categories: e.target.checked ? form.drivingLicense.categories : []
+                        }
+                      })}
+                      className="rounded border-gray-300 text-violet-600 focus:ring-violet-600"
+                    />
+                    <span className="text-sm text-gray-700">I have a driving license</span>
+                  </label>
+
+                  {form.drivingLicense.has_license && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Categories</label>
+                      <div className="flex flex-wrap gap-2">
+                        {['A', 'A1', 'A2', 'B', 'BE', 'C', 'CE', 'D', 'DE'].map(category => (
+                          <button
+                            key={category}
+                            type="button"
+                            onClick={() => toggleDrivingLicenseCategory(category)}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                              form.drivingLicense.categories.includes(category)
+                                ? 'bg-violet-600 text-white'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                          >
+                            {category}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Attachments (URLs for now) */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h2 className="text-lg font-semibold text-gray-900">Attachments</h2>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const title = prompt('Attachment title (e.g., "Bachelor Degree"):')
+                      if (title) {
+                        const url = prompt('Attachment URL or description:')
+                        if (url) {
+                          setForm({
+                            ...form,
+                            attachments: [...form.attachments, { title, url, type: 'pdf' }]
+                          })
+                        }
+                      }
+                    }}
+                    className="text-violet-600 text-sm font-medium hover:text-violet-700"
+                  >
+                    + Add Attachment
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {form.attachments.map((attachment, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">📄</span>
+                        <div>
+                          <p className="font-medium text-gray-700 text-sm">{attachment.title}</p>
+                          <p className="text-xs text-gray-500 truncate max-w-[200px]">{attachment.url}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setForm({
+                          ...form,
+                          attachments: form.attachments.filter((_, idx) => idx !== i)
+                        })}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {form.attachments.length === 0 && (
+                    <p className="text-sm text-gray-500 italic">No attachments added yet</p>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  💡 Tip: Add links to your diplomas, certificates, or portfolio PDFs
+                </p>
               </div>
 
               {/* Actions */}
